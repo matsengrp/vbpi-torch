@@ -185,3 +185,38 @@ class VBPI(nn.Module):
             torch.save(self.state_dict(), save_to_path)
             
         return test_lb, test_kl_div
+
+    def sample_trees_to_file_helper(self, tree_count, file_path, outgroup, file_mode):
+        """
+        This method samples trees to file. This accounts for an issue with leaf
+        nodes being named for taxon 1, 2, ..., N as strings in the support, then
+        0, 1, ..., N-1 as ints in the sampled trees, and rerooting the trees on
+        the outgroup.
+        """
+        sample_trees = [self.tree_model.sample_tree() for n in range(tree_count)]
+        for tree in sample_trees:
+            namenum(tree, self.taxa)
+        self.branch_model.attach_branch_lengths(sample_trees)
+        for tree in sample_trees:
+            for node in tree.traverse("postorder"):
+                node.name += 1
+            reroot_node = tree.search_nodes(name=outgroup)[0]
+            tree.set_outgroup(reroot_node)
+        with open(file_path, file_mode) as the_file:
+            for tree in sample_trees:
+                the_file.write(tree.write(format=5) + "\n")
+
+    def sample_trees_to_file(self, tree_count, outgroup, file_path):
+        """
+        This method samples trees to file in batches.
+        """
+        batch_size = 1000
+        remainder = tree_count % batch_size
+        if remainder == 0:
+            remainder = batch_size
+            quotient = tree_count // batch_size - 1
+        else: 
+            quotient = tree_count // batch_size
+        self.sample_trees_to_file_helper(remainder, file_path, int(outgroup), "w")
+        for _ in range(quotient):
+            self.sample_trees_to_file_helper(batch_size, file_path, int(outgroup), "a")

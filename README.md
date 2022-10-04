@@ -41,3 +41,18 @@ In the rooted/ folder
 python main.py --dataset DENV4 --burnin 2501 --coalescent_type constant --clock_type strict --init_clock_rate 1e-3 --sample_info --psp --empFreq
 python main.py --dataset HCV --burnin 251 --coalescent_type skyride --clock_type fixed_rate --init_clock_rate 7.9e-4 --psp
 ```
+
+## To sample trees for comparison with generalized pruning
+
+In the unrooted/ folder
+
+```bash
+python main.py --dataset DS1 --psp --supportType long_mcmc --maxIter 200000 --sampleTrees 1000000 --outgroup 15
+python main.py --dataset DS3 --psp --supportType long_mcmc --maxIter 200000 --sampleTrees 1000000 --outgroup 7
+python main.py --dataset DS4 --psp --supportType long_mcmc --maxIter 200000 --sampleTrees 1000000 --outgroup 8
+python main.py --dataset DS5 --psp --supportType long_mcmc --maxIter 200000 --sampleTrees 1000000 --outgroup 1
+python main.py --dataset DS6 --psp --supportType long_mcmc --maxIter 200000 --sampleTrees 1000000 --outgroup 6
+python main.py --dataset DS7 --psp --supportType long_mcmc --maxIter 200000 --sampleTrees 1000000 --outgroup 7
+python main.py --dataset DS8 --psp --supportType long_mcmc --maxIter 200000 --sampleTrees 1000000 --outgroup 4
+```
+

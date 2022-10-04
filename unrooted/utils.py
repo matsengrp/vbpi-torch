@@ -230,3 +230,55 @@ def tree_process(tree, toBitArr):
         if not node.is_root():
             node.clade_bitarr = toBitArr.from_clade(node.get_leaf_names())
             node.split_bitarr = min([node.clade_bitarr, ~node.clade_bitarr]).to01()
+
+
+def long_mcmc_treeprob(filename):
+    """
+    This method is very similar mcmc_treeprob, but is designed to process 
+    trprobs files.
+    """
+    data_type = "nexus"
+    tree_format = "newick"
+    mcmc_samp_tree_stats = Phylo.parse(filename, data_type)
+    mcmc_samp_tree_dict = OrderedDict()
+    mcmc_samp_tree_name = []
+    mcmc_samp_tree_wts = []
+    for tree in mcmc_samp_tree_stats:
+        handle = StringIO()
+        Phylo.write(tree, handle, tree_format)
+        mcmc_samp_tree_dict[tree.name] = Tree(handle.getvalue().strip())
+        handle.close()
+        mcmc_samp_tree_name.append(tree.name)
+        mcmc_samp_tree_wts.append(tree.weight)
+    return mcmc_samp_tree_dict, mcmc_samp_tree_name, mcmc_samp_tree_wts
+
+
+def combine_trprobs_files(file_paths, hpd=None):
+    """
+    This method averages the trees and weights of multiple trprobs files.
+    """
+    number_of_trpobs = len(file_paths)
+    tree_dict_total = OrderedDict()
+    tree_dict_map_total = defaultdict(float)
+    tree_names_total = []
+    tree_wts_total = []
+    n_samp_tree = 0
+    for file_path in file_paths:
+        tree_dict_rep, tree_name_rep, tree_wts_rep = long_mcmc_treeprob(file_path)
+        for j, name in enumerate(tree_name_rep):
+            tree_id = tree_dict_rep[name].get_topology_id()
+            if tree_id not in tree_dict_map_total:
+                n_samp_tree += 1
+                tree_names_total.append("tree_{}".format(n_samp_tree))
+                tree_dict_total[tree_names_total[-1]] = tree_dict_rep[name]
+            tree_dict_map_total[tree_id] += tree_wts_rep[j]
+    for key in tree_dict_map_total:
+        tree_dict_map_total[key] /= number_of_trpobs
+    tree_wts_total = [tree_dict_map_total[tree_dict_total[name].get_topology_id()] for name in tree_names_total]
+    if hpd is not None and hpd < 1.0:
+        sorted_indices = np.argsort(tree_wts_total)[::-1]
+        cum_sum = np.cumsum([tree_wts_total[j] for j in sorted_indices])
+        stop_index = np.searchsorted(cum_sum, hpd, side="right")
+        tree_names_total = [tree_names_total[j] for j in sorted_indices[:stop_index]]
+        tree_wts_total = [tree_wts_total[j] for j in sorted_indices[:stop_index]]
+    return tree_dict_total, tree_names_total, tree_wts_total

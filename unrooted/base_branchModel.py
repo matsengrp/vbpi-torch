@@ -93,4 +93,31 @@ class BaseModel(nn.Module):
         mean, std = torch.stack(mean, dim=0), torch.stack(std, dim=0)
         samp_log_branch, logq_branch = self.sample_branch_base(len(tree_list))
         samp_log_branch, logq_branch = samp_log_branch * std.exp() + mean - 2.0, logq_branch - torch.sum(std, -1)
-        return samp_log_branch, logq_branch       
+        return samp_log_branch, logq_branch
+
+
+    def attach_branch_lengths(self, tree_list):
+        """
+        Given a list of ete3 Trees with nodes labelled by namenum, set the dist 
+        attribute (the distance) of each node to a sample from the current 
+        learned distribution. This method is only intended to be called by VBPI
+        instance method sample_trees_to_file_helper.
+        """
+        with torch.no_grad():  # probably don't need this
+            self.pad_feature()
+            mean, std = zip(*map(lambda x: self.mean_std(x), tree_list))
+            mean = torch.stack(mean, dim=0)
+            std = torch.stack(std, dim=0)
+            # The nodes of the trees are named 0 to 2*self.ntips-3, with the 
+            # first self.ntips of them being the leaf nodes for taxon and the 
+            # last being the root. The mean and std are sorted so that 
+            # mean[j][k] is the mean parameter for the node named "k" in the j-th 
+            # tree of tree_list (and similarly for std).
+            sample_log_branch, _ = self.sample_branch_base(len(tree_list))
+            sample_branch = (sample_log_branch * std.exp() + mean - 2.0).exp()
+
+            for tree_index, tree in enumerate(tree_list):
+                for node in tree.traverse("postorder"):
+                    if not node.is_root():
+                        node.dist = sample_branch[tree_index][int(node.name)].item()
+        return None       

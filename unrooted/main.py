@@ -2,7 +2,7 @@ import argparse
 import os
 
 from dataManipulation import *
-from utils import summary, summary_raw, mcmc_treeprob, get_support_from_mcmc
+from utils import summary, summary_raw, mcmc_treeprob, get_support_from_mcmc, combine_trprobs_files
 from vbpi import VBPI
 import time
 import numpy as np
@@ -12,8 +12,10 @@ parser = argparse.ArgumentParser()
 
 ######### Data arguments
 parser.add_argument('--dataset', required=True, help=' DS1 | DS2 | DS3 | DS4 | DS5 | DS6 | DS7 | DS8 ')
-parser.add_argument('--supportType', type=str, default='ufboot', help=' ufboot | mcmc ')
+parser.add_argument('--supportType', type=str, default='ufboot', help=' ufboot | mcmc | long_mcmc ')
 parser.add_argument('--empFreq', default=False, action='store_true', help='emprical frequence for KL computation')
+parser.add_argument('--sampleTrees', type=int, default=0, help=' number of trees to sample to file after training ')
+parser.add_argument('--outgroup', type=str, default="", help=' taxon number for outgroup rerooting ')
 
 
 ######### Model arguments
@@ -73,12 +75,18 @@ else:
 print('\nLoading Data set: {} ......'.format(args.dataset))
 run_time = -time.time()
 
+fasta_path= data_path + args.dataset + '.fasta'
 if args.supportType == 'ufboot':
     tree_dict_support, tree_names_support = summary_raw(args.dataset, ufboot_support_path)
 elif args.supportType == 'mcmc':
     tree_dict_support, tree_names_support, _ = mcmc_treeprob(mcmc_support_path + args.dataset + '.trprobs', 'nexus', taxon='keep')
-    
-data, taxa = loadData(data_path + args.dataset + '.fasta', 'fasta')
+elif args.supportType == 'long_mcmc':
+    ds = args.dataset.lower()
+    support_path = f"data/long_mcmc/{ds}/{ds}.trprobs"
+    fasta_path = f"data/long_mcmc/{ds}/{ds}.fasta"
+    tree_dict_support, tree_names_support, _ = combine_trprobs_files([support_path])
+
+data, taxa = loadData(fasta_path, 'fasta')
 
 run_time += time.time()
 print('Support loaded in {:.1f} seconds'.format(run_time))
@@ -125,3 +133,12 @@ else:
             kl_div_est = model.kl_div()
             print('Current KL Divergence {:.6f}\n'.format(kl_div_est))
             np.save(args.save_to_path.replace('.pt', 'checkpoint_{}_kl_div_est_'.format(n_iter) + args.datetime + '.npy'), kl_div_est)
+
+
+if args.sampleTrees > 0:
+    sample_tree_path = f"results/vbpi_sampled_trees_{args.dataset.lower()}.nwk"
+    print(f"Sampling trees and writing to file path: {sample_tree_path}")
+    print(f"Taxon order is: {taxa}")
+    print(f"If the above order is not [1, 2, ..., N], then there is a problem.")
+    model.sample_trees_to_file(args.sampleTrees, args.outgroup, sample_tree_path)
+

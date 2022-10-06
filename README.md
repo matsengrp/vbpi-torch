@@ -56,3 +56,21 @@ python main.py --dataset DS7 --psp --supportType long_mcmc --maxIter 200000 --sa
 python main.py --dataset DS8 --psp --supportType long_mcmc --maxIter 200000 --sampleTrees 1000000 --outgroup 4
 ```
 
+To then get the average branch length (per PCSP or SDAG edge) in a GP comparable format, we require the bito python module.
+See https://github.com/phylovi/bito for installation and details. 
+With this module installed, in the unrooted/ folder
+
+```bash
+python convert_vbpi_to_gp.py results/vbpi_sampled_trees_ds1.nwk data/long_mcmc/ds1/ds1.fasta results/vbpi_ds1_branch_parameters.csv results/vbpi_ds1_taxon_order.txt 
+python convert_vbpi_to_gp.py results/vbpi_sampled_trees_ds3.nwk data/long_mcmc/ds3/ds3.fasta results/vbpi_ds3_branch_parameters.csv results/vbpi_ds3_taxon_order.txt
+python convert_vbpi_to_gp.py results/vbpi_sampled_trees_ds4.nwk data/long_mcmc/ds4/ds4.fasta results/vbpi_ds4_branch_parameters.csv results/vbpi_ds4_taxon_order.txt
+python convert_vbpi_to_gp.py results/vbpi_sampled_trees_ds5.nwk data/long_mcmc/ds5/ds5.fasta results/vbpi_ds5_branch_parameters.csv results/vbpi_ds5_taxon_order.txt
+python convert_vbpi_to_gp.py results/vbpi_sampled_trees_ds6.nwk data/long_mcmc/ds6/ds6.fasta results/vbpi_ds6_branch_parameters.csv results/vbpi_ds6_taxon_order.txt
+python convert_vbpi_to_gp.py results/vbpi_sampled_trees_ds7.nwk data/long_mcmc/ds7/ds7.fasta results/vbpi_ds7_branch_parameters.csv results/vbpi_ds7_taxon_order.txt
+python convert_vbpi_to_gp.py results/vbpi_sampled_trees_ds8.nwk data/long_mcmc/ds8/ds8.fasta results/vbpi_ds8_branch_parameters.csv results/vbpi_ds8_taxon_order.txt
+```
+
+
+
+
+

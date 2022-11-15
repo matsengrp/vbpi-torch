@@ -56,6 +56,9 @@ python main.py --dataset DS7 --psp --supportType long_mcmc --maxIter 200000 --sa
 python main.py --dataset DS8 --psp --supportType long_mcmc --maxIter 200000 --sampleTrees 1000000 --outgroup 4
 ```
 
+By default the long MCMC run is based on an exponential prior. To use the long MCMC run based on uniform(0,1)
+prior, include the optional parameter `--long_mcmc_prior uniform`.`
+
 To then get the average branch length (per PCSP or SDAG edge) in a GP comparable format, we require the bito python module.
 See https://github.com/phylovi/bito for installation and details. 
 With this module installed, in the unrooted/ folder

@@ -13,6 +13,7 @@ parser = argparse.ArgumentParser()
 ######### Data arguments
 parser.add_argument('--dataset', required=True, help=' DS1 | DS2 | DS3 | DS4 | DS5 | DS6 | DS7 | DS8 ')
 parser.add_argument('--supportType', type=str, default='ufboot', help=' ufboot | mcmc | long_mcmc ')
+parser.add_argument('--long_mcmc_prior', type=str, default="exp", help=' exp | uniform ')
 parser.add_argument('--empFreq', default=False, action='store_true', help='emprical frequence for KL computation')
 parser.add_argument('--sampleTrees', type=int, default=0, help=' number of trees to sample to file after training ')
 parser.add_argument('--outgroup', type=str, default="", help=' taxon number for outgroup rerooting ')
@@ -82,7 +83,7 @@ elif args.supportType == 'mcmc':
     tree_dict_support, tree_names_support, _ = mcmc_treeprob(mcmc_support_path + args.dataset + '.trprobs', 'nexus', taxon='keep')
 elif args.supportType == 'long_mcmc':
     ds = args.dataset.lower()
-    support_path = f"data/long_mcmc/{ds}/{ds}.trprobs"
+    support_path = f"data/long_mcmc/{ds}/{args.long_mcmc_prior}/{ds}.trprobs"
     fasta_path = f"data/long_mcmc/{ds}/{ds}.fasta"
     tree_dict_support, tree_names_support, _ = combine_trprobs_files([support_path])
 
